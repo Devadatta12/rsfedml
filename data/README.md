@@ -1,0 +1,1 @@
+This folder must contain the RSI-CB256 dataset in order to convert its tif files into png images with a folder structure suitable for Tensorflow and Flower Fedarated Learning framework.
