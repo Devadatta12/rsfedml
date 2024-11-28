@@ -1,7 +1,7 @@
 """test: A Flower / TensorFlow app."""
 
 import os
-
+import numpy as np
 import keras
 from keras import layers, models, regularizers
 from flwr_datasets import FederatedDataset
@@ -10,11 +10,13 @@ from datasets import load_dataset
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.optimizers import SGD
 import tensorflow as tf
+import cv2
 
 # Make TensorFlow log less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 def resize_images(images, target_size=(224, 224)):
+    print("Shape of the images is ",images.shape)
     batch_images = tf.convert_to_tensor(images, dtype=tf.float32)
     resized_images = tf.image.resize(batch_images, target_size)
     resized_images = resized_images / 255.0
@@ -57,6 +59,16 @@ def load_data(partition_id, num_partitions):
 
     # Divide data on each node: 80% train, 20% test
     partition = partition.train_test_split(test_size=0.2)
-    x_train, y_train = resize_images(partition["train"]["image"]), partition["train"]["label"]
-    x_test, y_test = resize_images(partition["test"]["image"]), partition["test"]["label"]
+    train_images = [cv2.resize(img, (224, 224)) for img in partition["train"]["image"]]
+    test_images = [cv2.resize(img, (224, 224)) for img in partition["test"]["image"]]
+
+#     for i, img in enumerate(partition["train"]["image"][:5]):
+#         print(f"Image {i} type: {type(img)}")
+#         print(f"Image {i} shape: {np.array(img).shape if isinstance(img, np.ndarray) else 'Unknown'}")
+
+# # Check for irregularities in shapes
+#     shapes = [np.array(img).shape for img in partition["train"]["image"]]
+#     print("Unique shapes in train images:", set(shapes))
+    x_train, y_train = np.array(train_images, dtype=np.float32) / 255.0, partition["train"]["label"]
+    x_test, y_test = np.array(test_images, dtype=np.float32) / 255.0, partition["test"]["label"]
     return x_train, y_train, x_test, y_test
