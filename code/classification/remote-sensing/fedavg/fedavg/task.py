@@ -1,32 +1,39 @@
-"""fedavg: A Flower / TensorFlow app."""
+"""test: A Flower / TensorFlow app."""
 
 import os
 
 import keras
-from keras import layers
+from keras import layers, models, regularizers
 from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import IidPartitioner
-
+from datasets import load_dataset
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.optimizers import SGD
+import tensorflow as tf
 
 # Make TensorFlow log less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
+def resize_images(images, target_size=(224, 224)):
+    resized_images = tf.image.resize(images, target_size)
+    resized_images = resized_images / 255.0
+    return resized_images
 
 def load_model():
-    # Define a simple CNN for CIFAR-10 and set Adam optimizer
-    model = keras.Sequential(
-        [
-            keras.Input(shape=(32, 32, 3)),
-            layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
-            layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.Flatten(),
-            layers.Dropout(0.5),
-            layers.Dense(10, activation="softmax"),
-        ]
-    )
-    model.compile("adam", "sparse_categorical_crossentropy", metrics=["accuracy"])
+    base_model = ResNet50(weights=None, include_top=False, input_shape=(224, 224, 3))
+    base_model.trainable = True
+
+    model = models.Sequential([
+        base_model,
+        layers.GlobalAveragePooling2D(),
+        layers.Dense(256, activation="relu", kernel_regularizer=regularizers.L2(0.003)),
+        layers.Dense(7, activation="softmax")
+    ])
+
+    optimizer = SGD(learning_rate=0.03)
+
+    model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+
     return model
 
 
@@ -37,17 +44,17 @@ def load_data(partition_id, num_partitions):
     # Download and partition dataset
     # Only initialize `FederatedDataset` once
     global fds
+    global partitioner
     if fds is None:
+        dataset_dict = load_dataset("imagefolder", data_dir="../../../../data/dataset")
+        fds = dataset_dict["train"]
         partitioner = IidPartitioner(num_partitions=num_partitions)
-        fds = FederatedDataset(
-            dataset="uoft-cs/cifar10",
-            partitioners={"train": partitioner},
-        )
-    partition = fds.load_partition(partition_id, "train")
+        partitioner.dataset = fds
+    partition = partitioner.load_partition(partition_id)
     partition.set_format("numpy")
 
     # Divide data on each node: 80% train, 20% test
     partition = partition.train_test_split(test_size=0.2)
-    x_train, y_train = partition["train"]["img"] / 255.0, partition["train"]["label"]
-    x_test, y_test = partition["test"]["img"] / 255.0, partition["test"]["label"]
+    x_train, y_train = resize_images(partition["train"]["image"]), partition["train"]["label"]
+    x_test, y_test = resize_images(partition["test"]["image"]), partition["test"]["label"]
     return x_train, y_train, x_test, y_test
