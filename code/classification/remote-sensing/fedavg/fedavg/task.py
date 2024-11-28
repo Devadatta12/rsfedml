@@ -27,7 +27,7 @@ def load_model():
         base_model,
         layers.GlobalAveragePooling2D(),
         layers.Dense(256, activation="relu", kernel_regularizer=regularizers.L2(0.003)),
-        layers.Dense(7, activation="softmax")
+        layers.Dense(35, activation="softmax")
     ])
 
     optimizer = SGD(learning_rate=0.03)
