@@ -4,7 +4,7 @@ from flwr.client import NumPyClient, ClientApp
 from flwr.common import Context
 
 from fedavg.task import load_data, load_model
-
+from scipy.ndimage import affine_transform
 
 # Define Flower Client and client_fn
 class FlowerClient(NumPyClient):
@@ -12,25 +12,26 @@ class FlowerClient(NumPyClient):
         self, model, data, epochs, batch_size, verbose
     ):
         self.model = model
-        self.x_train, self.y_train, self.x_test, self.y_test = data
+        self.train_generator, self.test_generator = data
         self.epochs = epochs
         self.batch_size = batch_size
         self.verbose = verbose
 
     def fit(self, parameters, config):
         self.model.set_weights(parameters)
+        print("Fitting the model")
         self.model.fit(
-            self.x_train,
-            self.y_train,
+            self.train_generator,
             epochs=self.epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
         )
+        print("Fitting the model")
         return self.model.get_weights(), len(self.x_train), {}
 
     def evaluate(self, parameters, config):
         self.model.set_weights(parameters)
-        loss, accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)
+        loss, accuracy = self.model.evaluate(self.test_generator, verbose=0)
         return loss, len(self.x_test), {"accuracy": accuracy}
 
 

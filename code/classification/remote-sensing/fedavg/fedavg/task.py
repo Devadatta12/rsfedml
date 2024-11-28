@@ -11,6 +11,9 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.optimizers import SGD
 import tensorflow as tf
 import cv2
+from scipy.ndimage import affine_transform
+import random
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 # Make TensorFlow log less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -36,7 +39,7 @@ def load_model():
 
     optimizer = SGD(learning_rate=0.03)
 
-    model.compile(optimizer=optimizer, loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
     return model
 
@@ -47,6 +50,44 @@ fds = None  # Cache FederatedDataset
 def load_data(partition_id, num_partitions):
     # Download and partition dataset
     # Only initialize `FederatedDataset` once
+    training_path = "../../../../data/fedarated_dataset/iid/train/partition_"+str(partition_id)
+    testing_path = "../../../../data/fedarated_dataset/iid/test/partition_"+str(partition_id)
+    
+    train_datagen = ImageDataGenerator(
+    rescale=1.0/255.0,
+    rotation_range=10,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=True,
+    fill_mode="nearest"
+    )
+
+
+    train_generator = train_datagen.flow_from_directory(
+        training_path,
+        target_size=(224, 224),
+        batch_size=32,
+        class_mode="categorical",
+        subset="training"
+    )
+
+    test_datagen = ImageDataGenerator(
+    rescale=1.0/255.0,
+    shear_range=0.1,
+    zoom_range=0.1   
+    )
+
+    test_generator = test_datagen.flow_from_directory(
+    testing_path,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode="categorical",
+    shuffle=False
+    )
+
+
     global fds
     global partitioner
     if fds is None:
@@ -57,18 +98,4 @@ def load_data(partition_id, num_partitions):
     partition = partitioner.load_partition(partition_id)
     partition.set_format("numpy")
 
-    # Divide data on each node: 80% train, 20% test
-    partition = partition.train_test_split(test_size=0.2)
-    train_images = [cv2.resize(img, (224, 224)) for img in partition["train"]["image"]]
-    test_images = [cv2.resize(img, (224, 224)) for img in partition["test"]["image"]]
-
-#     for i, img in enumerate(partition["train"]["image"][:5]):
-#         print(f"Image {i} type: {type(img)}")
-#         print(f"Image {i} shape: {np.array(img).shape if isinstance(img, np.ndarray) else 'Unknown'}")
-
-# # Check for irregularities in shapes
-#     shapes = [np.array(img).shape for img in partition["train"]["image"]]
-#     print("Unique shapes in train images:", set(shapes))
-    x_train, y_train = np.array(train_images, dtype=np.float32) / 255.0, partition["train"]["label"]
-    x_test, y_test = np.array(test_images, dtype=np.float32) / 255.0, partition["test"]["label"]
-    return x_train, y_train, x_test, y_test
+    return train_generator, test_generator

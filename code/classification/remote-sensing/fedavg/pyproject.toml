@@ -27,7 +27,7 @@ clientapp = "fedavg.client_app:app"
 num-server-rounds = 50
 local-epochs = 10
 batch-size = 32
-verbose = false
+verbose = true
 
 [tool.flwr.federations]
 default = "local-simulation"
