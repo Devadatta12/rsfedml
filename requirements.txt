@@ -99,7 +99,6 @@ tensorboard-data-server==0.7.2
 tensorflow==2.18.0
 tensorflow-io-gcs-filesystem==0.37.1
 termcolor==2.5.0
--e git+https://github.com/Devadatta12/rsfedml.git@6f4723ce48bf8614a5acf4c0524aa0783162b0b6#egg=test&subdirectory=test
 tomli==2.1.0
 tomli_w==1.1.0
 tornado==6.4.2
