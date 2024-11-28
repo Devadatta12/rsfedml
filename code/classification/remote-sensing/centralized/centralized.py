@@ -3,9 +3,10 @@ from tensorflow.keras import layers, models, regularizers
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import SGD
+import pandas as pd
 
 
-train_dir = "../../../../data/testing/train"
+train_dir = "../../../../data/dataset/train"
 
 train_datagen = ImageDataGenerator(
     rescale=1.0/255.0,
@@ -36,7 +37,7 @@ train_generator = train_datagen.flow_from_directory(
 #     subset="validation"
 # )
 
-test_dir = "../../../../data/testing/test"
+test_dir = "../../../../data/dataset/test"
 test_datagen = ImageDataGenerator(
     rescale=1.0/255.0   
 )
@@ -73,3 +74,5 @@ history = model.fit(
 
 testloss, testaccuracy = model.evaluate(test_generator)
 print(f"Test Accuracy: {testaccuracy:.4f}")
+history_df = pd.DataFrame(history.history)
+history_df.to_csv('training_history.csv', index=False)
