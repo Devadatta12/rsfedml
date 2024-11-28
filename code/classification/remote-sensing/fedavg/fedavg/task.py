@@ -15,7 +15,7 @@ import tensorflow as tf
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 def resize_images(images, target_size=(224, 224)):
-    batch_images = tf.convert_to_tensor(batch_images, dtype=tf.float32)
+    batch_images = tf.convert_to_tensor(images, dtype=tf.float32)
     resized_images = tf.image.resize(batch_images, target_size)
     resized_images = resized_images / 255.0
 
