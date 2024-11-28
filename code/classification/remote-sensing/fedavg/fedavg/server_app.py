@@ -9,6 +9,7 @@ from flwr.server.client_proxy import ClientProxy, EvaluateRes
 from flwr.server.strategy import FedAvg
 from typing import List, Tuple, Union, Optional, Dict
 from fedavg.task import load_model
+import csv
 
 class AggregateCustomMetricStrategy(FedAvg):
     def aggregate_evaluate(
@@ -36,6 +37,18 @@ class AggregateCustomMetricStrategy(FedAvg):
         print(
             f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}"
         )
+
+        with open("metrics.csv", "a", newline="") as f:
+            writer = csv.writer(f)
+            if server_round == 1:
+                writer.writerow(["Round", "Num Clients", "Loss", "Accuracy"])
+
+            writer.writerow([
+                server_round,
+                len(results),
+                aggregated_loss,
+                aggregated_accuracy,
+            ])
 
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}
