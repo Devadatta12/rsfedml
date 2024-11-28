@@ -87,15 +87,4 @@ def load_data(partition_id, num_partitions):
     shuffle=False
     )
 
-
-    global fds
-    global partitioner
-    if fds is None:
-        dataset_dict = load_dataset("imagefolder", data_dir="../../../../data/dataset")
-        fds = dataset_dict["train"]
-        partitioner = IidPartitioner(num_partitions=num_partitions)
-        partitioner.dataset = fds
-    partition = partitioner.load_partition(partition_id)
-    partition.set_format("numpy")
-
     return train_generator, test_generator
