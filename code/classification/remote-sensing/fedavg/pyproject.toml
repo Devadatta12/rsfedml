@@ -24,8 +24,8 @@ serverapp = "fedavg.server_app:app"
 clientapp = "fedavg.client_app:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 50
-local-epochs = 10
+num-server-rounds = 35
+local-epochs = 5
 batch-size = 32
 verbose = true
 
@@ -33,4 +33,4 @@ verbose = true
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 20
+options.num-supernodes = 5

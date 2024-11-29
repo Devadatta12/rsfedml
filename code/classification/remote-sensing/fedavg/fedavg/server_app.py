@@ -34,6 +34,7 @@ class AggregateCustomMetricStrategy(FedAvg):
 
         # Aggregate and print custom metric
         aggregated_accuracy = sum(accuracies) / sum(examples)
+        max_accuracy = max(accuracies)
         print(
             f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}"
         )
@@ -41,13 +42,14 @@ class AggregateCustomMetricStrategy(FedAvg):
         with open("metrics.csv", "a", newline="") as f:
             writer = csv.writer(f)
             if server_round == 1:
-                writer.writerow(["Round", "Num Clients", "Loss", "Accuracy"])
+                writer.writerow(["Round", "Num Clients", "Loss", "Accuracy", "Max Accuracy"])
 
             writer.writerow([
                 server_round,
                 len(results),
                 aggregated_loss,
                 aggregated_accuracy,
+                max_accuracy
             ])
 
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
