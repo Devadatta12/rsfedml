@@ -8,7 +8,7 @@ from flwr.server.strategy import FedAvg
 from typing import List, Tuple, Union, Optional, Dict
 from logging import WARNING
 from typing import Callable, Optional, Union
-
+import csv
 from flwr.common import FitRes, NDArray, NDArrays, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 from functools import partial, reduce
@@ -43,7 +43,6 @@ def aggregate_entropy_inplace(results: list[tuple[ClientProxy, FitRes]]) -> NDAr
     
     scaling_factors = [ fit_res[1].num_examples * (1+entropy) / total_relaxed_samples for fit_res, entropy in zip(results, entropy['entropy'])]
 
-    print(scaling_factors)
 
     def _try_inplace(
         x: NDArray, y: Union[NDArray, float], np_binary_op: np.ufunc
@@ -133,6 +132,18 @@ class AggregateCustomMetricStrategy(FedAvg):
         print(
             f"Round {server_round} accuracy aggregated from client results: {aggregated_accuracy}"
         )
+
+        with open("metrics.csv", "a", newline="") as f:
+            writer = csv.writer(f)
+            if server_round == 1:
+                writer.writerow(["Round", "Num Clients", "Loss", "Accuracy"])
+
+            writer.writerow([
+                server_round,
+                len(results),
+                aggregated_loss,
+                aggregated_accuracy,
+            ])
 
         # Return aggregated loss and metrics (i.e., aggregated accuracy)
         return aggregated_loss, {"accuracy": aggregated_accuracy}
