@@ -39,9 +39,9 @@ def aggregate_entropy_inplace(results: list[tuple[ClientProxy, FitRes]]) -> NDAr
     # Count total examples
     fit_metrics = [res.metrics for _, res in results]
     entropy = pd.DataFrame([item['entropy'] for item in fit_metrics], columns=['entropy'])
-    total_relaxed_samples = sum(fit_res.num_examples*(1+entropy) for _, fit_res, entropy in zip(results, entropy['entropy'])) 
+    total_relaxed_samples = sum(fit_res[1].num_examples*(1+entropy) for fit_res, entropy in zip(results, entropy['entropy'])) 
     
-    scaling_factors = [ fit_res.num_examples * (1+entropy) / total_relaxed_samples for _, fit_res, entropy in zip(results, entropy['entropy'])]
+    scaling_factors = [ fit_res[1].num_examples * (1+entropy) / total_relaxed_samples for fit_res, entropy in zip(results, entropy['entropy'])]
 
     print(scaling_factors)
 
