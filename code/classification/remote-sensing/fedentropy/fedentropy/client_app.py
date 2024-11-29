@@ -1,10 +1,10 @@
-"""fedentropy: A Flower / TensorFlow app."""
+"""fedavg: A Flower / TensorFlow app."""
 
 from flwr.client import NumPyClient, ClientApp
 from flwr.common import Context
 
 from fedentropy.task import load_data, load_model
-
+from scipy.ndimage import affine_transform
 
 # Define Flower Client and client_fn
 class FlowerClient(NumPyClient):
@@ -12,7 +12,7 @@ class FlowerClient(NumPyClient):
         self, model, data, epochs, batch_size, verbose
     ):
         self.model = model
-        self.x_train, self.y_train, self.x_test, self.y_test = data
+        self.train_generator, self.test_generator, self.dataset_entropy = data
         self.epochs = epochs
         self.batch_size = batch_size
         self.verbose = verbose
@@ -20,18 +20,17 @@ class FlowerClient(NumPyClient):
     def fit(self, parameters, config):
         self.model.set_weights(parameters)
         self.model.fit(
-            self.x_train,
-            self.y_train,
+            self.train_generator,
             epochs=self.epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
         )
-        return self.model.get_weights(), len(self.x_train), {}
+        return self.model.get_weights(), len(self.train_generator), {"entropy": self.dataset_entropy}
 
     def evaluate(self, parameters, config):
         self.model.set_weights(parameters)
-        loss, accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)
-        return loss, len(self.x_test), {"accuracy": accuracy}
+        loss, accuracy = self.model.evaluate(self.test_generator, verbose=0)
+        return loss, len(self.test_generator), {"accuracy": accuracy}
 
 
 def client_fn(context: Context):
