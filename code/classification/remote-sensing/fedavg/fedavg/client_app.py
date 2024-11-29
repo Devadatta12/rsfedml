@@ -27,12 +27,12 @@ class FlowerClient(NumPyClient):
             verbose=self.verbose,
         )
         print("Fitting the model")
-        return self.model.get_weights(), len(self.x_train), {}
+        return self.model.get_weights(), len(self.train_generator), {}
 
     def evaluate(self, parameters, config):
         self.model.set_weights(parameters)
         loss, accuracy = self.model.evaluate(self.test_generator, verbose=0)
-        return loss, len(self.x_test), {"accuracy": accuracy}
+        return loss, len(self.test_generator), {"accuracy": accuracy}
 
 
 def client_fn(context: Context):
