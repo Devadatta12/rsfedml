@@ -50,8 +50,8 @@ fds = None  # Cache FederatedDataset
 def load_data(partition_id, num_partitions):
     # Download and partition dataset
     # Only initialize `FederatedDataset` once
-    training_path = "../../../../data/fedarated_dataset/complete_non_iid/train/partition_"+str(partition_id)
-    testing_path = "../../../../data/fedarated_dataset/complete_non_iid/test/partition_"+str(partition_id)
+    training_path = "../../../../../data/fedarated_dataset/complete_non_iid/train/partition_"+str(partition_id)
+    testing_path = "../../../../../data/fedarated_dataset/complete_non_iid/test/partition_"+str(partition_id)
     
     train_datagen = ImageDataGenerator(
     rescale=1.0/255.0,
