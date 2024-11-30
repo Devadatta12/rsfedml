@@ -14,6 +14,7 @@ import cv2
 from scipy.ndimage import affine_transform
 import random
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from collections import Counter
 
 # Make TensorFlow log less verbose
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -47,11 +48,18 @@ def load_model():
 fds = None  # Cache FederatedDataset
 
 
+def entropy(class_distribution: dict):
+    total_samples = sum(class_distribution.values())
+    probabilities = [count / total_samples for count in class_distribution.values()]
+    dataset_entropy = -sum(p * np.log2(p) for p in probabilities if p > 0)
+    return dataset_entropy
+
+
 def load_data(partition_id, num_partitions):
     # Download and partition dataset
     # Only initialize `FederatedDataset` once
-    training_path = "../../../../../data/fedarated_dataset/complete_non_iid/train/partition_"+str(partition_id)
-    testing_path = "../../../../../data/fedarated_dataset/complete_non_iid/test/partition_"+str(partition_id)
+    training_path = "../../../../../data/fedarated_dataset/iid/train/partition_"+str(partition_id)
+    testing_path = "../../../../../data/fedarated_dataset/iid/test/partition_"+str(partition_id)
     
     train_datagen = ImageDataGenerator(
     rescale=1.0/255.0,
@@ -87,4 +95,7 @@ def load_data(partition_id, num_partitions):
     shuffle=False
     )
 
-    return train_generator, test_generator
+    class_distribution = Counter(train_generator.classes)
+    dataset_entropy = entropy(class_distribution)
+
+    return train_generator, test_generator, dataset_entropy
