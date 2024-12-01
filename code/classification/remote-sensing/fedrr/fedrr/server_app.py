@@ -38,6 +38,7 @@ import random
 def round_robin(server_round: int, results: list[tuple[ClientProxy, FitRes]]) -> NDArrays:
     """Compute in-place weighted average."""
     round_robin_index = server_round%len(results)
+    print(f"Selected client {results[round_robin_index][0].cid} for round {server_round}")
     params = [
         x for x in parameters_to_ndarrays(results[round_robin_index][1].parameters)
     ]
