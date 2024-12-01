@@ -39,17 +39,15 @@ def load_images_and_labels(data_dir, target_size=(256, 256)):
     return np.array(images), np.array(labels), class_map
 
 
-def build_autoencoder(input_shape=(256, 256, 3), latent_dim=128):
-    encoder_input = Input(shape=(256, 256, 3))
+def build_autoencoder(input_shape=(128, 128, 3), latent_dim=128):
+    encoder_input = Input(shape=input_shape)
     resnet_encoder = ResNet50(weights=None, include_top=False, input_tensor=encoder_input)
     encoded = GlobalAveragePooling2D()(resnet_encoder.output)
-    latent_space = Dense(128, activation='relu', name="latent_space", kernel_regularizer=l2(0.003))(encoded)
+    latent_space = Dense(64, activation='relu', name="latent_space", kernel_regularizer=l2(0.003))(encoded)
 
-    decoder_input = Dense(8 * 8 * 512, activation='relu', kernel_regularizer=l2(0.003))(latent_space)
-    decoder_reshape = Reshape((8, 8, 512))(decoder_input)
-    decoder = Conv2D(256, (3, 3), activation='relu', padding='same')(decoder_reshape)
-    decoder = UpSampling2D((2, 2))(decoder)
-    decoder = Conv2D(128, (3, 3), activation='relu', padding='same')(decoder)
+    decoder_input = Dense(8 * 8 * 256, activation='relu', kernel_regularizer=l2(0.003))(latent_space)
+    decoder_reshape = Reshape((8, 8, 256))(decoder_input)
+    decoder = Conv2D(128, (3, 3), activation='relu', padding='same')(decoder_reshape)
     decoder = UpSampling2D((2, 2))(decoder)
     decoder = Conv2D(64, (3, 3), activation='relu', padding='same')(decoder)
     decoder = UpSampling2D((2, 2))(decoder)
