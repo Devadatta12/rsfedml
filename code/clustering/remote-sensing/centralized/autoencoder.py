@@ -13,17 +13,30 @@ import os
 import numpy as np
 import cv2
 
-def load_images_as_numpy(data_dir, target_size=(256, 256)):
-    images = []
-    for filename in os.listdir(data_dir):
-        file_path = os.path.join(data_dir, filename)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            img = cv2.imread(file_path)
-            img = cv2.resize(img, target_size)
-            img = img / 255.0
-            images.append(img)
+import os
+import numpy as np
+import cv2  # For image resizing
 
-    return np.array(images, dtype=np.float32)
+def load_images_and_labels(data_dir, target_size=(256, 256)):
+    images = []
+    labels = []
+    class_map = {}
+
+    for label, classname in enumerate(os.listdir(data_dir)):
+        class_dir = os.path.join(data_dir, classname)
+        if not os.path.isdir(class_dir):
+            continue
+        class_map[classname] = label
+        for filename in os.listdir(class_dir):
+            file_path = os.path.join(class_dir, filename)
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                img = cv2.imread(file_path)
+                img = cv2.resize(img, target_size)
+                img = img / 255.0
+                images.append(img)
+                labels.append(label)
+
+    return np.array(images), np.array(labels), class_map
 
 
 def build_autoencoder(input_shape=(256, 256, 3), latent_dim=128):
@@ -48,8 +61,17 @@ def build_autoencoder(input_shape=(256, 256, 3), latent_dim=128):
 
     return autoencoder, encoder
 
-train_images = load_images_as_numpy("../../../../data/clustering_dataset/train", target_size=(256, 256))
-test_images = load_images_as_numpy("../../../../data/clustering_dataset/test", target_size=(256, 256))
+
+def save_encoded_features_with_labels(encoded_features, labels, output_file):
+    df = pd.DataFrame(encoded_features)
+    df['label'] = labels
+
+    df.to_csv(output_file, index=False)
+
+
+train_images, train_labels, class_map = load_images_and_labels("../../../../data/dataset/train", target_size=(256, 256))
+test_images, test_labels, _ = load_images_and_labels("../../../../data/dataset/test", target_size=(256, 256))
+
 
 autoencoder, encoder = build_autoencoder(latent_dim=128)
 
@@ -67,6 +89,12 @@ autoencoder.fit(
 encoded_train = encoder.predict(train_images)
 encoded_test = encoder.predict(test_images)
 
+train_df = pd.DataFrame(encoded_train)
+train_df['label'] = train_labels
 
-pd.DataFrame(encoded_train).to_csv("encoded_features_train.csv", index=False)
-pd.DataFrame(encoded_test).to_csv("encoded_features_test.csv", index=False)
+test_df = pd.DataFrame(encoded_test)
+test_df['label'] = test_labels
+
+all_df = pd.concat([train_df, test_df], ignore_index=True)
+
+all_df.to_csv("encoded_features.csv", index=False)
